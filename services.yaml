@@ -1,0 +1,58 @@
+update_schedule:
+  name: Update Dog Walking Schedule
+  description: Update the dog walking schedule for a specific day and time
+  fields:
+    day:
+      name: Day
+      description: Day of the week
+      required: true
+      selector:
+        select:
+          options:
+            - monday
+            - tuesday
+            - wednesday
+            - thursday
+            - friday
+            - saturday
+            - sunday
+    time:
+      name: Time
+      description: Time slot for the walk
+      required: true
+      selector:
+        select:
+          options:
+            - "8:00"
+            - "12:00"
+            - "16:00"
+            - "22:00"
+    walker:
+      name: Walker
+      description: Name of the person walking the dog
+      required: true
+      selector:
+        text:
+
+get_schedule:
+  name: Get Dog Walking Schedule
+  description: Get the complete dog walking schedule
+  fields:
+    day:
+      name: Day
+      description: Specific day to get schedule for (optional)
+      required: false
+      selector:
+        select:
+          options:
+            - monday
+            - tuesday
+            - wednesday
+            - thursday
+            - friday
+            - saturday
+            - sunday
+
+refresh_sensors:
+  name: Refresh Dog Walking Sensors
+  description: Manually refresh all dog walking sensors to update their states 

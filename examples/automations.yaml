@@ -1,0 +1,114 @@
+# Example automations for Dog Walking Schedule
+
+# Notification 30 minutes before each walk
+- alias: "Dog Walk Reminder - 30 minutes"
+  description: "Send notification 30 minutes before scheduled walk time"
+  trigger:
+    - platform: time_pattern
+      minutes: "/5"  # Check every 5 minutes
+  condition:
+    - condition: template
+      value_template: >
+        {% set next_walk = states('sensor.dog_walking_next_walk_time') | as_datetime %}
+        {% if next_walk %}
+          {% set now = now() %}
+          {% set time_diff = (next_walk - now).total_seconds() / 60 %}
+          {{ 25 <= time_diff <= 35 }}
+        {% else %}
+          false
+        {% endif %}
+  action:
+    - service: notify.persistent_notification
+      data:
+        title: "🐕 Dog Walk Reminder"
+        message: >
+          {{ states('sensor.dog_walking_next_walker') }} should walk the dog in 30 minutes 
+          ({{ states.sensor.dog_walking_next_walk_time.attributes.time_slot }})
+
+# Notification at walk time
+- alias: "Dog Walk Time Now"
+  description: "Send notification when it's time to walk the dog"
+  trigger:
+    - platform: time_pattern
+      minutes: "/1"  # Check every minute
+  condition:
+    - condition: template
+      value_template: >
+        {% set next_walk = states('sensor.dog_walking_next_walk_time') | as_datetime %}
+        {% if next_walk %}
+          {% set now = now() %}
+          {% set time_diff = (next_walk - now).total_seconds() / 60 %}
+          {{ -2 <= time_diff <= 2 }}
+        {% else %}
+          false
+        {% endif %}
+  action:
+    - service: notify.persistent_notification
+      data:
+        title: "🐕 Time to Walk the Dog!"
+        message: >
+          {{ states('sensor.dog_walking_current_walker') }}, it's time to walk the dog!
+
+# Log schedule changes
+- alias: "Log Dog Walking Schedule Changes"
+  description: "Log when the dog walking schedule is updated"
+  trigger:
+    - platform: event
+      event_type: dog_walking_schedule_retrieved
+  action:
+    - service: logbook.log
+      data:
+        name: "Dog Walking Schedule"
+        message: "Schedule was retrieved or updated"
+        entity_id: sensor.dog_walking_current_walker
+
+# Daily schedule announcement
+- alias: "Daily Dog Walking Schedule"
+  description: "Announce today's dog walking schedule each morning"
+  trigger:
+    - platform: time
+      at: "07:00:00"
+  action:
+    - service: notify.persistent_notification
+      data:
+        title: "🐕 Today's Dog Walking Schedule"
+        message: >
+          {{ states('sensor.dog_walking_todays_schedule') }}
+
+# Weekend reminder for "Iemand" slots
+- alias: "Weekend Dog Walking Reminder"
+  description: "Remind about unassigned weekend slots"
+  trigger:
+    - platform: time
+      at: "08:00:00"
+  condition:
+    - condition: time
+      weekday:
+        - sat
+        - sun
+  action:
+    - condition: template
+      value_template: >
+        {{ 'Iemand' in states('sensor.dog_walking_todays_schedule') }}
+    - service: notify.persistent_notification
+      data:
+        title: "🐕 Weekend Dog Walking"
+        message: >
+          There are unassigned dog walking slots today. Please check the schedule and assign someone!
+
+# Update schedule example (can be triggered manually or by other automations)
+- alias: "Emergency Schedule Update"
+  description: "Example of how to update the schedule programmatically"
+  trigger:
+    - platform: state
+      entity_id: input_boolean.emergency_schedule_change
+      to: "on"
+  action:
+    - service: dog_walking.update_schedule
+      data:
+        day: "{{ now().strftime('%A').lower() }}"
+        time: "{{ states('sensor.time') }}"
+        walker: "Emergency Walker"
+    - service: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.emergency_schedule_change 

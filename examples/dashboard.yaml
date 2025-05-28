@@ -1,0 +1,101 @@
+# Example Lovelace dashboard configuration for Dog Walking Schedule
+
+# Main dog walking card
+- type: vertical-stack
+  title: "🐕 Dog Walking Schedule"
+  cards:
+    # Current status
+    - type: entities
+      title: "Current Status"
+      entities:
+        - entity: sensor.dog_walking_current_walker
+          name: "Current Walker"
+          icon: mdi:dog
+        - entity: sensor.dog_walking_next_walker
+          name: "Next Walker"
+          icon: mdi:dog-side
+        - entity: sensor.dog_walking_next_walk_time
+          name: "Next Walk Time"
+          icon: mdi:clock-outline
+
+    # Today's full schedule
+    - type: markdown
+      content: |
+        ## Today's Schedule
+        {{ states('sensor.dog_walking_todays_schedule') }}
+
+    # Weekly schedule overview
+    - type: markdown
+      content: |
+        ## Weekly Schedule
+        
+        | Day | 8:00 | 12:00 | 16:00 | 22:00 |
+        |-----|------|-------|-------|-------|
+        | Monday | Hidde | Opa | Noud | Sophie |
+        | Tuesday | Hugo | Sebe | Thijs | Sophie |
+        | Wednesday | Hidde | Sebe/Sophie | Noud | Sophie |
+        | Thursday | Hugo | Sebe | Hidde | Sophie |
+        | Friday | Hidde | Sophie | Noud | Sophie |
+        | Saturday | Noud | Iemand | Iemand | Sophie |
+        | Sunday | Hugo | Iemand | Iemand | Sophie |
+
+    # Quick actions
+    - type: entities
+      title: "Quick Actions"
+      entities:
+        - type: call-service
+          name: "Update Current Slot"
+          service: dog_walking.update_schedule
+          service_data:
+            day: "{{ now().strftime('%A').lower() }}"
+            time: "{{ states.sensor.dog_walking_current_walker.attributes.time_slot }}"
+            walker: "New Walker"
+          icon: mdi:pencil
+
+# Alternative compact card
+- type: glance
+  title: "Dog Walking - Quick View"
+  entities:
+    - entity: sensor.dog_walking_current_walker
+      name: "Current"
+    - entity: sensor.dog_walking_next_walker
+      name: "Next"
+    - entity: sensor.dog_walking_next_walk_time
+      name: "Next Time"
+
+# History card to track changes
+- type: history-graph
+  title: "Dog Walking History"
+  entities:
+    - sensor.dog_walking_current_walker
+  hours_to_show: 168  # Show last week
+
+# Conditional card for weekend reminders
+- type: conditional
+  conditions:
+    - entity: sensor.date
+      state_not: "unknown"
+    - condition: template
+      value_template: >
+        {{ now().weekday() >= 5 and 'Iemand' in states('sensor.dog_walking_todays_schedule') }}
+  card:
+    type: markdown
+    content: |
+      ⚠️ **Weekend Reminder**
+      
+      There are unassigned walking slots today ("Iemand"). 
+      Please assign someone to walk the dog!
+
+# Button card for manual schedule update (requires custom:button-card)
+- type: custom:button-card
+  name: "Emergency Schedule Change"
+  icon: mdi:alert
+  tap_action:
+    action: call-service
+    service: input_boolean.turn_on
+    service_data:
+      entity_id: input_boolean.emergency_schedule_change
+  styles:
+    card:
+      - background-color: "#ff6b6b"
+      - color: white 
