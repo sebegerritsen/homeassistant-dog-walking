@@ -1,10 +1,10 @@
 {
   "domain": "dog_walking",
   "name": "Dog Walking Schedule",
-  "codeowners": ["@sebe"],
+  "codeowners": ["@sebegerritsen"],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://github.com/sebe/dog_walking",
+  "documentation": "https://github.com/sebegerritsen/homeassistant-dog-walking",
   "integration_type": "hub",
   "iot_class": "local_polling",
   "requirements": [],
